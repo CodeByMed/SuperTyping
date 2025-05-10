@@ -110,39 +110,96 @@ function loadStats() {
 }
 
 // -------------------- Auth Simulation --------------------
-function login() {
-  const username = document.getElementById("login-username").value;
-  const password = document.getElementById("login-password").value;
+// --- IndexedDB Setup ---
+let db = null;
+const DB_NAME = "SuperTypingDB";
+const DB_VERSION = 1;
 
-  if (!username || !password) {
-    showNotification("Please enter username and password.");
-    return;
+const openRequest = indexedDB.open(DB_NAME, DB_VERSION);
+
+openRequest.onerror = (e) => {
+  console.error("IndexedDB error:", e.target.error);
+};
+
+openRequest.onsuccess = (e) => {
+  db = e.target.result;
+  console.log("✅ DB connected");
+};
+
+openRequest.onupgradeneeded = (e) => {
+  db = e.target.result;
+  if (!db.objectStoreNames.contains("users")) {
+    const usersStore = db.createObjectStore("users", { keyPath: "username" });
+    usersStore.createIndex("username", "username", { unique: true });
   }
 
-  loginContainer.hidden = true;
-  showNotification(`Welcome, ${username}!`);
-  loadRandomText();
-  loadStats();
-}
+  if (!db.objectStoreNames.contains("stats")) {
+    const statsStore = db.createObjectStore("stats", { keyPath: "id", autoIncrement: true });
+    statsStore.createIndex("user", "user");
+    statsStore.createIndex("timestamp", "timestamp");
+  }
+};
 
-function register() {
-  const username = document.getElementById("register-username").value;
+// --- Auth functions ---
+async function register() {
+  const username = document.getElementById("register-username").value.trim();
   const password = document.getElementById("register-password").value;
 
   if (!username || !password) {
-    showNotification("Please fill in all fields.");
-    return;
+    return showNotification("Please fill in both fields.");
   }
 
+  const userExists = await getUser(username);
+  if (userExists) {
+    return showNotification("Username already exists.");
+  }
+
+  const tx = db.transaction("users", "readwrite");
+  const store = tx.objectStore("users");
+  store.add({ username, password });
+
+  tx.oncomplete = () => {
+    showNotification("Account created!");
+    toggleRegister(false);
+  };
+}
+
+async function login() {
+  const username = document.getElementById("login-username").value.trim();
+  const password = document.getElementById("login-password").value;
+
+  if (!username || !password) {
+    return showNotification("Please enter username and password.");
+  }
+
+  const user = await getUser(username);
+  if (!user || user.password !== password) {
+    return showNotification("Invalid credentials.");
+  }
+
+  localStorage.setItem("supertyping_user", username);
+  loginContainer.hidden = true;
   registerContainer.hidden = true;
-  loginContainer.hidden = false;
-  showNotification("Account created! Please log in.");
+  showNotification(`Welcome, ${username}!`);
+  loadRandomText();
+  loadStatsFromDB(username);
+}
+
+function getUser(username) {
+  return new Promise((resolve) => {
+    const tx = db.transaction("users", "readonly");
+    const store = tx.objectStore("users");
+    const req = store.get(username);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(null);
+  });
 }
 
 function toggleRegister(showRegister) {
   registerContainer.hidden = !showRegister;
   loginContainer.hidden = showRegister;
 }
+
 
 // -------------------- Init --------------------
 window.addEventListener("load", () => {
