@@ -153,3 +153,26 @@ th, td {
 th {
   background-color: #2a2a2a;
 }
+
+#text-display span {
+  padding: 0 1px;
+  font-weight: 500;
+}
+
+span.correct {
+  color: #00ff7f;
+}
+
+span.incorrect {
+  color: #ff4d4d;
+}
+
+span.active {
+  border-bottom: 2px solid gold;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}

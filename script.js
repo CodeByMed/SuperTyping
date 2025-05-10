@@ -17,12 +17,13 @@ let typedCharacters = 0;
 let correctCharacters = 0;
 
 // -------------------- Text Handling --------------------
+// -------------------- Text Handling --------------------
 async function loadRandomText() {
   try {
     const response = await fetch("https://api.quotable.io/random");
     const data = await response.json();
     currentText = data.content;
-    textDisplay.textContent = currentText;
+    renderText(currentText);
     resetTyping();
   } catch (error) {
     showNotification("Failed to load text. Please try again.");
@@ -30,24 +31,52 @@ async function loadRandomText() {
   }
 }
 
-function resetTyping() {
-  textInput.value = "";
-  typedCharacters = 0;
-  correctCharacters = 0;
-  startTime = null;
-  updateStats(0, 100);
-  textInput.focus();
+function renderText(text) {
+  textDisplay.innerHTML = "";
+  [...text].forEach((char, idx) => {
+    const span = document.createElement("span");
+    span.textContent = char;
+    if (idx === 0) span.classList.add("active");
+    textDisplay.appendChild(span);
+  });
 }
 
+
+// -------------------- Typing Logic --------------------
 // -------------------- Typing Logic --------------------
 textInput.addEventListener("input", () => {
+  const input = textInput.value;
+  const spans = textDisplay.querySelectorAll("span");
+
   if (!startTime) startTime = new Date();
 
-  const input = textInput.value;
-  typedCharacters = input.length;
-  correctCharacters = countCorrectCharacters(input, currentText);
+  let correct = 0;
 
-  const timeElapsed = (new Date() - startTime) / 1000 / 60; // minutes
+  spans.forEach((span, i) => {
+    const typedChar = input[i];
+
+    if (typedChar == null) {
+      span.classList.remove("correct", "incorrect", "active");
+    } else if (typedChar === span.textContent) {
+      span.classList.add("correct");
+      span.classList.remove("incorrect");
+      correct++;
+    } else {
+      span.classList.add("incorrect");
+      span.classList.remove("correct");
+    }
+
+    span.classList.remove("active");
+  });
+
+  if (spans[input.length]) {
+    spans[input.length].classList.add("active");
+  }
+
+  typedCharacters = input.length;
+  correctCharacters = correct;
+
+  const timeElapsed = (new Date() - startTime) / 1000 / 60;
   const wpm = Math.round((correctCharacters / 5) / timeElapsed || 0);
   const accuracy = Math.round((correctCharacters / typedCharacters) * 100) || 0;
 
