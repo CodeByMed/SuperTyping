@@ -17,7 +17,6 @@ let typedCharacters = 0;
 let correctCharacters = 0;
 
 // -------------------- Text Handling --------------------
-// -------------------- Text Handling --------------------
 async function loadRandomText() {
   try {
     const response = await fetch("https://api.quotable.io/random");
@@ -41,8 +40,6 @@ function renderText(text) {
   });
 }
 
-
-// -------------------- Typing Logic --------------------
 // -------------------- Typing Logic --------------------
 textInput.addEventListener("input", () => {
   const input = textInput.value;
@@ -171,6 +168,8 @@ openRequest.onupgradeneeded = (e) => {
 
 // --- Auth functions ---
 async function register() {
+  await waitForDB();
+
   const username = document.getElementById("register-username").value.trim();
   const password = document.getElementById("register-password").value;
 
@@ -193,7 +192,10 @@ async function register() {
   };
 }
 
+
 async function login() {
+  await waitForDB();
+
   const username = document.getElementById("login-username").value.trim();
   const password = document.getElementById("login-password").value;
 
@@ -213,6 +215,7 @@ async function login() {
   loadRandomText();
   loadStatsFromDB(username);
 }
+
 
 function getUser(username) {
   return new Promise((resolve) => {
@@ -234,3 +237,17 @@ function toggleRegister(showRegister) {
 window.addEventListener("load", () => {
   loginContainer.hidden = false;
 });
+
+function waitForDB() {
+  return new Promise((resolve) => {
+    if (db) return resolve();
+
+    const interval = setInterval(() => {
+      if (db) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, 100);
+  });
+}
+
