@@ -11,7 +11,7 @@
 <body>
   <div class="notification" id="notification"></div>
 
-  <header>
+  <header class="header">
     <div class="logo">SuperTyping</div>
     <nav class="menu-icons">
       <button class="icon-btn" title="Settings">⚙️</button>
@@ -21,48 +21,49 @@
     </nav>
   </header>
 
-  <main class="typing-area">
-    <div id="text-display">Loading...</div>
-    <input id="text-input" type="text" placeholder="Type here..." autocomplete="off" />
-    <div class="stats">
-      <div>WPM: <span id="wpm">0</span></div>
-      <div>Accuracy: <span id="accuracy">100%</span></div>
-    </div>
+  <main class="main">
+    <section class="typing-container">
+      <div id="text-display" class="text-display">Loading...</div>
+      <input id="text-input" class="text-input" type="text" placeholder="Type here..." autocomplete="off" />
+      <div class="stats">
+        <div>WPM: <span id="wpm">0</span></div>
+        <div>Accuracy: <span id="accuracy">100%</span></div>
+      </div>
+    </section>
 
-    <section class="stats-dashboard" id="stats-dashboard" style="display:none;">
-  <h2>Your Typing History</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>WPM</th>
-        <th>Accuracy</th>
-      </tr>
-    </thead>
-    <tbody id="stats-body">
-      <!-- Dynamisch generiert -->
-    </tbody>
-  </table>
-</section>
-
+    <section class="stats-dashboard" id="stats-dashboard" hidden>
+      <h2>Your Typing History</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>WPM</th>
+            <th>Accuracy</th>
+          </tr>
+        </thead>
+        <tbody id="stats-body">
+          <!-- Dynamically filled -->
+        </tbody>
+      </table>
+    </section>
   </main>
 
-  <!-- Login -->
-  <div class="login-container" id="login-container">
+  <!-- Login Modal -->
+  <section class="auth-container" id="login-container">
     <h2>Login</h2>
     <input type="text" id="login-username" placeholder="Username" />
     <input type="password" id="login-password" placeholder="Password" />
     <button onclick="login()">Login</button>
     <p>No account? <span onclick="toggleRegister(true)" class="link">Create one</span></p>
-  </div>
+  </section>
 
-  <!-- Register -->
-  <div class="register-container" id="register-container" style="display:none;">
+  <!-- Register Modal -->
+  <section class="auth-container" id="register-container" hidden>
     <h2>Create Account</h2>
     <input type="text" id="register-username" placeholder="Username" />
     <input type="password" id="register-password" placeholder="Password" />
     <button onclick="register()">Create Account</button>
     <p>Have an account? <span onclick="toggleRegister(false)" class="link">Login</span></p>
-  </div>
+  </section>
 </body>
 </html>
