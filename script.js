@@ -1,4 +1,4 @@
-// Elements
+// -------------------- Elements --------------------
 const textDisplay = document.getElementById("text-display");
 const textInput = document.getElementById("text-input");
 const wpmDisplay = document.getElementById("wpm");
@@ -15,6 +15,7 @@ let startTime = null;
 let currentText = "";
 let typedCharacters = 0;
 let correctCharacters = 0;
+let currentUser = null;
 
 // -------------------- Text Handling --------------------
 async function loadRandomText() {
@@ -40,6 +41,14 @@ function renderText(text) {
   });
 }
 
+function resetTyping() {
+  textInput.value = "";
+  startTime = null;
+  typedCharacters = 0;
+  correctCharacters = 0;
+  updateStats(0, 0);
+}
+
 // -------------------- Typing Logic --------------------
 textInput.addEventListener("input", () => {
   const input = textInput.value;
@@ -51,7 +60,6 @@ textInput.addEventListener("input", () => {
 
   spans.forEach((span, i) => {
     const typedChar = input[i];
-
     if (typedChar == null) {
       span.classList.remove("correct", "incorrect", "active");
     } else if (typedChar === span.textContent) {
@@ -62,7 +70,6 @@ textInput.addEventListener("input", () => {
       span.classList.add("incorrect");
       span.classList.remove("correct");
     }
-
     span.classList.remove("active");
   });
 
@@ -81,18 +88,12 @@ textInput.addEventListener("input", () => {
 
   if (input === currentText) {
     showNotification("Well done! Loading new text...");
-    saveStats(wpm, accuracy);
+    if (currentUser) {
+      saveStatsToDB(currentUser, wpm, accuracy);
+    }
     setTimeout(loadRandomText, 1500);
   }
 });
-
-function countCorrectCharacters(input, reference) {
-  let correct = 0;
-  for (let i = 0; i < input.length; i++) {
-    if (input[i] === reference[i]) correct++;
-  }
-  return correct;
-}
 
 function updateStats(wpm, accuracy) {
   wpmDisplay.textContent = wpm;
@@ -108,35 +109,7 @@ function showNotification(message) {
   }, 3000);
 }
 
-// -------------------- Stats Dashboard --------------------
-function saveStats(wpm, accuracy) {
-  const stats = JSON.parse(localStorage.getItem("typingStats")) || [];
-  stats.push({
-    date: new Date().toLocaleString(),
-    wpm,
-    accuracy
-  });
-  localStorage.setItem("typingStats", JSON.stringify(stats));
-  loadStats();
-}
-
-function loadStats() {
-  const stats = JSON.parse(localStorage.getItem("typingStats")) || [];
-  statsBody.innerHTML = "";
-
-  stats.reverse().slice(0, 10).forEach(stat => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${stat.date}</td>
-      <td>${stat.wpm}</td>
-      <td>${stat.accuracy}%</td>
-    `;
-    statsBody.appendChild(row);
-  });
-}
-
-// -------------------- Auth Simulation --------------------
-// --- IndexedDB Setup ---
+// -------------------- IndexedDB Setup --------------------
 let db = null;
 const DB_NAME = "SuperTypingDB";
 const DB_VERSION = 1;
@@ -154,6 +127,7 @@ openRequest.onsuccess = (e) => {
 
 openRequest.onupgradeneeded = (e) => {
   db = e.target.result;
+
   if (!db.objectStoreNames.contains("users")) {
     const usersStore = db.createObjectStore("users", { keyPath: "username" });
     usersStore.createIndex("username", "username", { unique: true });
@@ -166,7 +140,7 @@ openRequest.onupgradeneeded = (e) => {
   }
 };
 
-// --- Auth functions ---
+// -------------------- Auth Simulation --------------------
 async function register() {
   await waitForDB();
 
@@ -192,7 +166,6 @@ async function register() {
   };
 }
 
-
 async function login() {
   await waitForDB();
 
@@ -208,14 +181,21 @@ async function login() {
     return showNotification("Invalid credentials.");
   }
 
+  currentUser = username;
   localStorage.setItem("supertyping_user", username);
+
   loginContainer.hidden = true;
   registerContainer.hidden = true;
   showNotification(`Welcome, ${username}!`);
+
   loadRandomText();
   loadStatsFromDB(username);
 }
 
+function toggleRegister(showRegister) {
+  registerContainer.hidden = !showRegister;
+  loginContainer.hidden = showRegister;
+}
 
 function getUser(username) {
   return new Promise((resolve) => {
@@ -227,21 +207,9 @@ function getUser(username) {
   });
 }
 
-function toggleRegister(showRegister) {
-  registerContainer.hidden = !showRegister;
-  loginContainer.hidden = showRegister;
-}
-
-
-// -------------------- Init --------------------
-window.addEventListener("load", () => {
-  loginContainer.hidden = false;
-});
-
 function waitForDB() {
   return new Promise((resolve) => {
     if (db) return resolve();
-
     const interval = setInterval(() => {
       if (db) {
         clearInterval(interval);
@@ -251,3 +219,44 @@ function waitForDB() {
   });
 }
 
+// -------------------- Stats in IndexedDB --------------------
+function saveStatsToDB(user, wpm, accuracy) {
+  const tx = db.transaction("stats", "readwrite");
+  const store = tx.objectStore("stats");
+  store.add({
+    user,
+    wpm,
+    accuracy,
+    timestamp: Date.now()
+  });
+  tx.oncomplete = () => {
+    loadStatsFromDB(user);
+  };
+}
+
+function loadStatsFromDB(user) {
+  const tx = db.transaction("stats", "readonly");
+  const store = tx.objectStore("stats");
+  const index = store.index("user");
+  const request = index.getAll(IDBKeyRange.only(user));
+
+  request.onsuccess = () => {
+    const stats = request.result;
+    statsBody.innerHTML = "";
+
+    stats.sort((a, b) => b.timestamp - a.timestamp).slice(0, 10).forEach(stat => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${new Date(stat.timestamp).toLocaleString()}</td>
+        <td>${stat.wpm}</td>
+        <td>${stat.accuracy}%</td>
+      `;
+      statsBody.appendChild(row);
+    });
+  };
+}
+
+// -------------------- Init --------------------
+window.addEventListener("load", () => {
+  loginContainer.hidden = false;
+});
