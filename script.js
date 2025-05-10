@@ -42,7 +42,7 @@ function resetTyping() {
   startTime = null;
   typedCharacters = 0;
   correctCharacters = 0;
-  updateStats(0, 0);
+  updateStats(0, 100);
 }
 
 // -------------------- Typing Logic --------------------
@@ -50,23 +50,24 @@ textInput.addEventListener("input", () => {
   const input = textInput.value;
   const spans = textDisplay.querySelectorAll("span");
 
-  if (!startTime) startTime = new Date();
+  if (!startTime && input.length > 0) {
+    startTime = new Date();
+  }
 
   let correct = 0;
 
   spans.forEach((span, i) => {
     const typedChar = input[i];
-    if (typedChar == null) {
-      span.classList.remove("correct", "incorrect", "active");
-    } else if (typedChar === span.textContent) {
+    span.classList.remove("correct", "incorrect", "active");
+
+    if (typedChar == null) return;
+
+    if (typedChar === span.textContent) {
       span.classList.add("correct");
-      span.classList.remove("incorrect");
       correct++;
     } else {
       span.classList.add("incorrect");
-      span.classList.remove("correct");
     }
-    span.classList.remove("active");
   });
 
   if (spans[input.length]) {
@@ -82,9 +83,9 @@ textInput.addEventListener("input", () => {
 
   updateStats(wpm, accuracy);
 
+  // Load new text only when entire input is complete and correct
   if (input === currentText) {
-    showNotification("Well done! Loading new text...");
-    setTimeout(loadRandomText, 1500);
+    setTimeout(loadRandomText, 300);
   }
 });
 
@@ -105,4 +106,9 @@ function showNotification(message) {
 // -------------------- Init --------------------
 window.addEventListener("load", () => {
   loadRandomText();
+  textInput.focus();
+});
+
+document.body.addEventListener("click", () => {
+  textInput.focus();
 });

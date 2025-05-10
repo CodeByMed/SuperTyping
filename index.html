@@ -23,7 +23,6 @@
 
   <main class="main">
     <section class="typing-container">
-      <div id="text-display" class="text-display">Loading...</div>
       <input id="text-input" class="text-input" type="text" placeholder="Type here..." autocomplete="off" />
       <div class="stats">
         <div>WPM: <span id="wpm">0</span></div>
@@ -48,22 +47,5 @@
     </section>
   </main>
 
-  <!-- Login Modal -->
-  <section class="auth-container" id="login-container">
-    <h2>Login</h2>
-    <input type="text" id="login-username" placeholder="Username" />
-    <input type="password" id="login-password" placeholder="Password" />
-    <button onclick="login()">Login</button>
-    <p>No account? <span onclick="toggleRegister(true)" class="link">Create one</span></p>
-  </section>
-
-  <!-- Register Modal -->
-  <section class="auth-container" id="register-container" hidden>
-    <h2>Create Account</h2>
-    <input type="text" id="register-username" placeholder="Username" />
-    <input type="password" id="register-password" placeholder="Password" />
-    <button onclick="register()">Create Account</button>
-    <p>Have an account? <span onclick="toggleRegister(false)" class="link">Login</span></p>
-  </section>
 </body>
 </html>
