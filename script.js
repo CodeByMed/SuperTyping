@@ -89,7 +89,7 @@ textInput.addEventListener("input", () => {
   if (input === currentText) {
     showNotification("Well done! Loading new text...");
     if (currentUser) {
-      saveStatsToDB(currentUser, wpm, accuracy);
+      saveStatsToLocalStorage(currentUser, wpm, accuracy);
     }
     setTimeout(loadRandomText, 1500);
   }
@@ -109,43 +109,11 @@ function showNotification(message) {
   }, 3000);
 }
 
-// -------------------- IndexedDB Setup --------------------
-let db = null;
-const DB_NAME = "SuperTypingDB";
-const DB_VERSION = 1;
-
-const openRequest = indexedDB.open(DB_NAME, DB_VERSION);
-
-openRequest.onerror = (e) => {
-  console.error("IndexedDB error:", e.target.error);
-};
-
-openRequest.onsuccess = (e) => {
-  db = e.target.result;
-  console.log("✅ DB connected");
-};
-
-openRequest.onupgradeneeded = (e) => {
-  db = e.target.result;
-
-  // Create 'users' store if not exists
-  if (!db.objectStoreNames.contains("users")) {
-    const usersStore = db.createObjectStore("users", { keyPath: "username" });
-    usersStore.createIndex("username", "username", { unique: true });
-  }
-
-  // Create 'stats' store if not exists
-  if (!db.objectStoreNames.contains("stats")) {
-    const statsStore = db.createObjectStore("stats", { keyPath: "id", autoIncrement: true });
-    statsStore.createIndex("user", "user");
-    statsStore.createIndex("timestamp", "timestamp");
-  }
-};
-
 // -------------------- Auth Simulation --------------------
-async function register() {
-  await waitForDB();
+// -------------------- LocalStorage Functions --------------------
 
+// Register the user and store in localStorage
+function register() {
   const username = document.getElementById("register-username").value.trim();
   const password = document.getElementById("register-password").value;
 
@@ -153,24 +121,20 @@ async function register() {
     return showNotification("Please fill in both fields.");
   }
 
-  const userExists = await getUser(username);
-  if (userExists) {
+  const users = JSON.parse(localStorage.getItem("users")) || {};
+  if (users[username]) {
     return showNotification("Username already exists.");
   }
 
-  const tx = db.transaction("users", "readwrite");
-  const store = tx.objectStore("users");
-  store.add({ username, password });
+  users[username] = { password };
+  localStorage.setItem("users", JSON.stringify(users));
 
-  tx.oncomplete = () => {
-    showNotification("Account created!");
-    toggleRegister(false);
-  };
+  showNotification("Account created!");
+  toggleRegister(false);
 }
 
-async function login() {
-  await waitForDB();
-
+// Login the user from localStorage
+function login() {
   const username = document.getElementById("login-username").value.trim();
   const password = document.getElementById("login-password").value;
 
@@ -178,7 +142,9 @@ async function login() {
     return showNotification("Please enter username and password.");
   }
 
-  const user = await getUser(username);
+  const users = JSON.parse(localStorage.getItem("users")) || {};
+  const user = users[username];
+
   if (!user || user.password !== password) {
     return showNotification("Invalid credentials.");
   }
@@ -191,7 +157,7 @@ async function login() {
   showNotification(`Welcome, ${username}!`);
 
   loadRandomText();
-  loadStatsFromDB(username);
+  loadStatsFromLocalStorage(username);
 }
 
 function toggleRegister(showRegister) {
@@ -199,67 +165,39 @@ function toggleRegister(showRegister) {
   loginContainer.hidden = showRegister;
 }
 
-function getUser(username) {
-  return new Promise((resolve) => {
-    const tx = db.transaction("users", "readonly");
-    const store = tx.objectStore("users");
-    const req = store.get(username);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => resolve(null);
-  });
-}
-
-// -------------------- Stats in IndexedDB --------------------
-function saveStatsToDB(user, wpm, accuracy) {
-  const tx = db.transaction("stats", "readwrite");
-  const store = tx.objectStore("stats");
-  store.add({
+// -------------------- Stats in LocalStorage --------------------
+function saveStatsToLocalStorage(user, wpm, accuracy) {
+  const stats = JSON.parse(localStorage.getItem("stats")) || [];
+  stats.push({
     user,
     wpm,
     accuracy,
     timestamp: Date.now()
   });
-  tx.oncomplete = () => {
-    loadStatsFromDB(user);
-  };
+  localStorage.setItem("stats", JSON.stringify(stats));
+
+  loadStatsFromLocalStorage(user);
 }
 
-function loadStatsFromDB(user) {
-  const tx = db.transaction("stats", "readonly");
-  const store = tx.objectStore("stats");
-  const index = store.index("user");
-  const request = index.getAll(IDBKeyRange.only(user));
+function loadStatsFromLocalStorage(user) {
+  const stats = JSON.parse(localStorage.getItem("stats")) || [];
+  statsBody.innerHTML = "";
 
-  request.onsuccess = () => {
-    const stats = request.result;
-    statsBody.innerHTML = "";
-
-    stats.sort((a, b) => b.timestamp - a.timestamp).slice(0, 10).forEach(stat => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${new Date(stat.timestamp).toLocaleString()}</td>
-        <td>${stat.wpm}</td>
-        <td>${stat.accuracy}%</td>
-      `;
-      statsBody.appendChild(row);
-    });
-  };
+  stats.filter(stat => stat.user === user)
+       .sort((a, b) => b.timestamp - a.timestamp)
+       .slice(0, 10)
+       .forEach(stat => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${new Date(stat.timestamp).toLocaleString()}</td>
+      <td>${stat.wpm}</td>
+      <td>${stat.accuracy}%</td>
+    `;
+    statsBody.appendChild(row);
+  });
 }
 
 // -------------------- Init --------------------
 window.addEventListener("load", () => {
   loginContainer.hidden = false;
 });
-
-// Wait for DB to be ready
-function waitForDB() {
-  return new Promise((resolve) => {
-    if (db) return resolve();
-    const interval = setInterval(() => {
-      if (db) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 100);
-  });
-}
