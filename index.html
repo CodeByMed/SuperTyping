@@ -6,9 +6,11 @@
   <title>SuperTyping</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-  <script src="script.js" defer></script>
+  <script defer src="script.js"></script>
 </head>
 <body>
+  <div class="notification" id="notification"></div>
+
   <header>
     <div class="logo">SuperTyping</div>
     <nav class="menu-icons">
@@ -28,11 +30,22 @@
     </div>
   </main>
 
+  <!-- Login -->
   <div class="login-container" id="login-container">
     <h2>Login</h2>
-    <input type="text" id="username" placeholder="Username" />
-    <button onclick="login()">Start Typing</button>
+    <input type="text" id="login-username" placeholder="Username" />
+    <input type="password" id="login-password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+    <p>No account? <span onclick="toggleRegister(true)" class="link">Create one</span></p>
   </div>
 
+  <!-- Register -->
+  <div class="register-container" id="register-container" style="display:none;">
+    <h2>Create Account</h2>
+    <input type="text" id="register-username" placeholder="Username" />
+    <input type="password" id="register-password" placeholder="Password" />
+    <button onclick="register()">Create Account</button>
+    <p>Have an account? <span onclick="toggleRegister(false)" class="link">Login</span></p>
+  </div>
 </body>
 </html>

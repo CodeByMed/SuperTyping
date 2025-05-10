@@ -1,6 +1,7 @@
 const textDisplay = document.getElementById('text-display');
 const textInput = document.getElementById('text-input');
 const loginContainer = document.getElementById('login-container');
+const registerContainer = document.getElementById('register-container');
 
 const words = [
   "monkey", "keyboard", "banana", "jungle", "fast", "typing", "practice", "random", "sentence", "gold",
@@ -32,13 +33,11 @@ request.onupgradeneeded = (event) => {
   store.createIndex("timestamp", "timestamp", { unique: false });
 };
 
-// Get a random word
 function getRandomWord() {
   const index = Math.floor(Math.random() * words.length);
   return words[index];
 }
 
-// Load next word
 function loadNewWord() {
   currentWord = getRandomWord();
   textDisplay.textContent = currentWord;
@@ -47,10 +46,9 @@ function loadNewWord() {
   startTime = new Date();
 }
 
-// Update WPM and accuracy
 function updateStats() {
   const now = new Date();
-  const timeElapsed = (now - startTime) / 1000 / 60; // in minutes
+  const timeElapsed = (now - startTime) / 1000 / 60;
   const wpm = Math.round((correctChars / 5) / timeElapsed);
   const accuracy = Math.round((correctChars / totalTyped) * 100);
   document.getElementById('wpm').textContent = isFinite(wpm) ? wpm : 0;
@@ -58,35 +56,26 @@ function updateStats() {
   return { wpm, accuracy };
 }
 
-// Save stats to IndexedDB
 function saveStatsToDB(wpm, accuracy) {
   if (!db) return;
-
   const user = localStorage.getItem('supertyping_user');
   const transaction = db.transaction(["typingStats"], "readwrite");
   const store = transaction.objectStore("typingStats");
-
   const data = {
     user,
     wpm,
     accuracy,
     timestamp: new Date().toISOString()
   };
-
   const request = store.add(data);
   request.onsuccess = () => {
     console.log("Stats saved:", data);
   };
-  request.onerror = () => {
-    console.error("Error saving stats");
-  };
 }
 
-// Input typing logic
 textInput.addEventListener('input', () => {
   const typed = textInput.value;
   totalTyped++;
-
   if (typed === currentWord) {
     correctChars += currentWord.length;
     const stats = updateStats();
@@ -95,21 +84,76 @@ textInput.addEventListener('input', () => {
   }
 });
 
-// Simple login system
+// LOGIN/REGISTER SYSTEM
+function showNotification(message) {
+  const notif = document.getElementById('notification');
+  notif.textContent = message;
+  notif.style.display = 'block';
+  setTimeout(() => notif.style.display = 'none', 3000);
+}
+
+function toggleRegister(show) {
+  registerContainer.style.display = show ? 'flex' : 'none';
+  loginContainer.style.display = show ? 'none' : 'flex';
+}
+
+function register() {
+  const username = document.getElementById('register-username').value;
+  const password = document.getElementById('register-password').value;
+
+  if (!username || !password) {
+    showNotification("Username and password required.");
+    return;
+  }
+
+  if (localStorage.getItem(`user_${username}`)) {
+    showNotification("Username already exists.");
+    return;
+  }
+
+  localStorage.setItem(`user_${username}`, password);
+  showNotification("Account created!");
+  toggleRegister(false);
+}
+
 function login() {
-  const username = document.getElementById('username').value;
-  if (username.trim()) {
+  const username = document.getElementById('login-username').value;
+  const password = document.getElementById('login-password').value;
+
+  const storedPassword = localStorage.getItem(`user_${username}`);
+
+  if (storedPassword && storedPassword === password) {
     localStorage.setItem('supertyping_user', username);
     loginContainer.style.display = 'none';
+    registerContainer.style.display = 'none';
     loadNewWord();
+    showNotification(`Welcome, ${username}!`);
+  } else {
+    showNotification("Invalid credentials.");
   }
 }
 
-// On load check login
+// SHOW STATS IN CONSOLE
+function getUserStats(callback) {
+  const user = localStorage.getItem('supertyping_user');
+  if (!db) return;
+
+  const transaction = db.transaction(["typingStats"], "readonly");
+  const store = transaction.objectStore("typingStats");
+  const index = store.index("user");
+  const request = index.getAll(IDBKeyRange.only(user));
+
+  request.onsuccess = () => {
+    callback(request.result);
+  };
+}
+
+// On load
 window.onload = () => {
   const user = localStorage.getItem('supertyping_user');
   if (user) {
     loginContainer.style.display = 'none';
+    registerContainer.style.display = 'none';
     loadNewWord();
   }
 };
