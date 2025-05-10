@@ -109,7 +109,6 @@ function showNotification(message) {
   }, 3000);
 }
 
-// -------------------- Auth Simulation --------------------
 // -------------------- LocalStorage Functions --------------------
 
 // Register the user and store in localStorage
@@ -133,7 +132,7 @@ function register() {
   toggleRegister(false);
 }
 
-// Login the user from localStorage
+// Login
 function login() {
   const username = document.getElementById("login-username").value.trim();
   const password = document.getElementById("login-password").value;
@@ -160,25 +159,7 @@ function login() {
   loadStatsFromLocalStorage(username);
 }
 
-function toggleRegister(showRegister) {
-  registerContainer.hidden = !showRegister;
-  loginContainer.hidden = showRegister;
-}
-
-// -------------------- Stats in LocalStorage --------------------
-function saveStatsToLocalStorage(user, wpm, accuracy) {
-  const stats = JSON.parse(localStorage.getItem("stats")) || [];
-  stats.push({
-    user,
-    wpm,
-    accuracy,
-    timestamp: Date.now()
-  });
-  localStorage.setItem("stats", JSON.stringify(stats));
-
-  loadStatsFromLocalStorage(user);
-}
-
+// -------------------- Load Stats from LocalStorage --------------------
 function loadStatsFromLocalStorage(user) {
   const stats = JSON.parse(localStorage.getItem("stats")) || [];
   statsBody.innerHTML = "";
@@ -195,6 +176,20 @@ function loadStatsFromLocalStorage(user) {
     `;
     statsBody.appendChild(row);
   });
+}
+
+// -------------------- Save Stats to LocalStorage --------------------
+function saveStatsToLocalStorage(user, wpm, accuracy) {
+  const stats = JSON.parse(localStorage.getItem("stats")) || [];
+  stats.push({
+    user,
+    wpm,
+    accuracy,
+    timestamp: Date.now()
+  });
+  localStorage.setItem("stats", JSON.stringify(stats));
+
+  loadStatsFromLocalStorage(user);
 }
 
 // -------------------- Init --------------------
