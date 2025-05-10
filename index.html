@@ -1,13 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperTyping</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SuperTyping</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="script.js" defer></script>
 </head>
 <body>
-    
-    <script src="script.js"></script>
+  <header>
+    <div class="logo">SuperTyping</div>
+    <nav class="menu-icons">
+      <button class="icon-btn" title="Settings">⚙️</button>
+      <button class="icon-btn" title="Profile">👤</button>
+      <button class="icon-btn" title="Notifications">🔔</button>
+      <button class="icon-btn" title="Keyboard">⌨️</button>
+    </nav>
+  </header>
+
+  <main class="typing-area">
+    <div id="text-display">Loading...</div>
+    <input id="text-input" type="text" placeholder="Type here..." autocomplete="off" />
+    <div class="stats">
+      <div>WPM: <span id="wpm">0</span></div>
+      <div>Accuracy: <span id="accuracy">100%</span></div>
+    </div>
+  </main>
+
+  <div class="login-container" id="login-container">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username" />
+    <button onclick="login()">Start Typing</button>
+  </div>
+
 </body>
 </html>
