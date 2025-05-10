@@ -128,11 +128,13 @@ openRequest.onsuccess = (e) => {
 openRequest.onupgradeneeded = (e) => {
   db = e.target.result;
 
+  // Create 'users' store if not exists
   if (!db.objectStoreNames.contains("users")) {
     const usersStore = db.createObjectStore("users", { keyPath: "username" });
     usersStore.createIndex("username", "username", { unique: true });
   }
 
+  // Create 'stats' store if not exists
   if (!db.objectStoreNames.contains("stats")) {
     const statsStore = db.createObjectStore("stats", { keyPath: "id", autoIncrement: true });
     statsStore.createIndex("user", "user");
@@ -207,18 +209,6 @@ function getUser(username) {
   });
 }
 
-function waitForDB() {
-  return new Promise((resolve) => {
-    if (db) return resolve();
-    const interval = setInterval(() => {
-      if (db) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 100);
-  });
-}
-
 // -------------------- Stats in IndexedDB --------------------
 function saveStatsToDB(user, wpm, accuracy) {
   const tx = db.transaction("stats", "readwrite");
@@ -260,3 +250,16 @@ function loadStatsFromDB(user) {
 window.addEventListener("load", () => {
   loginContainer.hidden = false;
 });
+
+// Wait for DB to be ready
+function waitForDB() {
+  return new Promise((resolve) => {
+    if (db) return resolve();
+    const interval = setInterval(() => {
+      if (db) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, 100);
+  });
+}
