@@ -120,3 +120,32 @@ header {
   justify-content: center;
   align-items: center;
 }
+
+.stats-dashboard {
+  max-width: 800px;
+  margin: 3rem auto;
+  background-color: #1e1e1e;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+}
+
+.stats-dashboard h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #ffd700;
+}
+
+th, td {
+  padding: 0.8rem;
+  text-align: center;
+  border-bottom: 1px solid #444;
+}
+
+th {
+  background-color: #2a2a2a;
+}

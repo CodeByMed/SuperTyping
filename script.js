@@ -148,6 +148,36 @@ function getUserStats(callback) {
   };
 }
 
+function showStatsDashboard() {
+  const section = document.getElementById('stats-dashboard');
+  const body = document.getElementById('stats-body');
+  body.innerHTML = '';
+
+  getUserStats((data) => {
+    if (!data || data.length === 0) {
+      body.innerHTML = '<tr><td colspan="3">No data yet.</td></tr>';
+      section.style.display = 'block';
+      return;
+    }
+
+    // Sort by timestamp (newest first)
+    data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    data.forEach(entry => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${new Date(entry.timestamp).toLocaleString()}</td>
+        <td>${entry.wpm}</td>
+        <td>${entry.accuracy}%</td>
+      `;
+      body.appendChild(row);
+    });
+
+    section.style.display = 'block';
+  });
+}
+
+
 // On load
 window.onload = () => {
   const user = localStorage.getItem('supertyping_user');
